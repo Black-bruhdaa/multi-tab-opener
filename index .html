@@ -1,0 +1,124 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const urlInput = document.getElementById('url-input');
+    const viewsInput = document.getElementById('views-input');
+    const speedInput = document.getElementById('speed');
+    const speedValue = document.getElementById('speed-value');
+    const openTabsButton = document.getElementById('open-tabs');
+    const testPopupButton = document.getElementById('test-popup');
+    const successMessage = document.getElementById('success-message');
+    const errorMessage = document.getElementById('error-message');
+    const countElement = document.getElementById('count');
+    const totalElement = document.getElementById('total');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+
+    // Update speed value display
+    speedInput.addEventListener('input', function() {
+        speedValue.textContent = this.value + 'ms';
+    });
+
+    // Set maximum views limit
+    viewsInput.addEventListener('change', function() {
+        if (this.value > 50) {
+            this.value = 50;
+            alert('Maximum allowed views is 50 due to browser limitations.');
+        }
+    });
+
+    // Test popup permission
+    testPopupButton.addEventListener('click', function() {
+        const testPopup = window.open('', 'testPopup', 'width=100,height=100');
+        if (testPopup) {
+            testPopup.document.write('<h3>Popup test successful!</h3>');
+            setTimeout(() => {
+                testPopup.close();
+                alert('Popup test successful! You can now use the view booster.');
+            }, 1000);
+        } else {
+            errorMessage.style.display = 'block';
+            errorMessage.textContent = 'Popups are blocked. Please allow popups for this site and try again.';
+        }
+    });
+
+    // Main function
+    openTabsButton.addEventListener('click', function() {
+        const url = urlInput.value.trim();
+        let views = parseInt(viewsInput.value);
+        const speed = parseInt(speedInput.value);
+
+        if (!url) {
+            alert('Please enter a valid URL');
+            return;
+        }
+        if (isNaN(views) || views < 1) {
+            alert('Please enter a valid number of views');
+            return;
+        }
+
+        // Limit to 50
+        views = Math.min(views, 50);
+
+        // Validate yo.fan link
+        if (!url.includes('yo.fan')) {
+            if (!confirm('This does not appear to be a yo.fan URL. Continue anyway?')) {
+                return;
+            }
+        }
+
+        // Reset UI
+        successMessage.style.display = 'none';
+        errorMessage.style.display = 'none';
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        countElement.textContent = '0';
+        totalElement.textContent = views;
+
+        successMessage.style.display = 'block';
+        successMessage.textContent = 'Process started. Please allow pop-ups if blocked.';
+        openTabsButton.textContent = 'Processing...';
+        openTabsButton.disabled = true;
+
+        let viewsAttempted = 0;
+
+        function openTabWithDelay() {
+            if (viewsAttempted < views) {
+                try {
+                    const newWindow = window.open(url, '_blank' + viewsAttempted);
+                    if (newWindow) {
+                        viewsAttempted++;
+                        countElement.textContent = viewsAttempted;
+                        const progress = (viewsAttempted / views) * 100;
+                        progressBar.style.width = progress + '%';
+
+                        // Close each tab after 2s
+                        setTimeout(() => {
+                            try { newWindow.close(); } catch (e) {}
+                        }, 2000);
+                    } else {
+                        errorMessage.style.display = 'block';
+                        errorMessage.textContent = `Popup blocked after ${viewsAttempted} views. Please allow popups.`;
+                        openTabsButton.textContent = 'Start Increasing Views';
+                        openTabsButton.disabled = false;
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Error opening tab:', e);
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = 'Error: ' + e.message;
+                    openTabsButton.textContent = 'Start Increasing Views';
+                    openTabsButton.disabled = false;
+                    return;
+                }
+                setTimeout(openTabWithDelay, speed);
+            } else {
+                successMessage.textContent = `Process completed! ${viewsAttempted} views attempted.`;
+                openTabsButton.textContent = 'Start Increasing Views';
+                openTabsButton.disabled = false;
+            }
+        }
+
+        openTabWithDelay();
+    });
+});
+</script>
